@@ -1,180 +1,88 @@
-# Face Recognition & Adversarial Attack Framework
+# SecurAI - Simulateur de Vulnérabilité Biométrique 👁️🛡️
 
-A deep learning research project exploring the vulnerabilities of face recognition systems through adversarial attacks. This framework demonstrates how carefully crafted perturbations can deceive CNN-based facial recognition models, and provides tools for both training robust models and simulating real-time adversarial attacks.
+**SecurAI** est un Proof of Concept (POC) professionnel démontrant les capacités et les vulnérabilités d'un système de reconnaissance faciale moderne (FaceNet) face aux attaques adversariales (Spoofing mathématique).
 
-## Overview
+Ce projet a été conçu pour illustrer comment un réseau de neurones peut être trompé (Attaque PGD) et comment se défendre via l'analyse de fréquence (FFT) et le filtrage spatial.
 
-This project implements an end-to-end pipeline for:
+---
 
-- **Face Recognition** — Training a custom CNN architecture on the LFW (Labeled Faces in the Wild) dataset for identity classification.
-- **Adversarial Attack Simulation** — Generating adversarial perturbations (FGSM-based) that can fool the trained model in real-time using a webcam feed.
-- **Defense Analysis** — Evaluating model robustness under varying attack strengths (epsilon values).
-- **Web Interface** — An interactive dashboard to visualize attack results and test the model via image upload.
+## 🚀 Fonctionnalités Principales
 
-## Tech Stack
+1. **Reconnaissance Faciale Haute Précision (FaceNet)**
+   - Utilisation d'**InceptionResnetV1** pré-entraîné sur VGGFace2.
+   - Extraction de signatures vectorielles (Embeddings 512D) pour une reconnaissance par similarité cosinus.
+   - Zéro entraînement requis : le système s'auto-enrôle à partir du dossier `/data/enrolled/`.
 
-| Layer | Technology |
-|-------|-----------|
-| Deep Learning | PyTorch, TorchVision |
-| Face Detection | YOLOv8 (Ultralytics) |
-| Backend API | Flask, Flask-CORS |
-| Frontend | HTML5, CSS3, Vanilla JavaScript |
-| Data Processing | NumPy, OpenCV, Pillow |
-| Visualization | Matplotlib |
-| Dataset | LFW-Deepfunneled |
+2. **Attaque Adversariale (I-FGSM / PGD)**
+   - Implémentation d'une attaque ciblée pour usurper l'identité de l'Administrateur.
+   - Calcul des gradients (Projected Gradient Descent) pour générer un bruit mathématique invisible ou minimal, capable de franchir le seuil de similarité biométrique.
+   - Simulation d'une attaque *Man-in-the-Middle* sur le flux vidéo.
 
-## Project Structure
+3. **Mécanismes de Défense Anti-Spoofing**
+   - **Détection d'Anomalie Spectrale (FFT)** : Analyse en temps réel des fréquences de l'image. Le bruit adverse crée une explosion dans les hautes fréquences, immédiatement détectée par la barre d'anomalie du système.
+   - **Filtrage Spatial** : Utilisation de filtres Gaussiens/Médians appliqués avant le réseau de neurones pour détruire mathématiquement la perturbation adversariale sans altérer les traits du visage.
 
-```
+4. **Interface Control Room (Web GUI)**
+   - Tableau de bord immersif "Cyber-Security" en plein écran.
+   - Retour vidéo en temps réel avec Bounding Boxes et scores de confiance.
+   - Gestion de l'affichage par code couleur (Vert = Accès Total, Jaune = Accès Limité, Rouge = Refusé).
+   - Mode "Analyse Statique" pour auditer des images via glisser-déposer.
+
+---
+
+## 📂 Architecture du Projet
+
+Le projet a été nettoyé et consolidé dans l'architecture **V2** suivante :
+
+```text
 Deepfake_Project/
-├── backend/
-│   ├── api/
-│   │   ├── app.py              # Flask API server (prediction + attack endpoints)
-│   │   └── routes.py           # API route definitions
-│   ├── model/
-│   │   ├── cnn_architecture.py # FaceCNN model definition (Conv2D layers + FC)
-│   │   └── utils.py            # DataManager, transforms, dataset loading
-│   ├── models/
-│   │   ├── saved_model/        # Trained model checkpoints
-│   │   └── saved_models/       # Additional model snapshots
-│   ├── simulate.py             # Real-time adversarial attack pipeline (webcam)
-│   └── train_model.py          # Alternative training entry point
-├── Training/
-│   ├── train.py                # Main training script (with progress bars & plots)
-│   └── evaluate_model.py       # Model evaluation and accuracy metrics
-├── Frontend/
-│   ├── index.html              # Main web interface
-│   ├── Css/
-│   │   └── Style.css           # Dashboard styling
-│   ├── Js/
-│   │   ├── script.js           # Core UI logic
-│   │   ├── main.js             # App initialization
-│   │   ├── face_recognition.js # Face recognition module
-│   │   ├── attack_simulation.js# Attack visualization
-│   │   └── protection.js       # Defense demo module
-│   └── Assets/                 # Images and media files
-├── data/
-│   └── lfw-deepfunneled/       # LFW face dataset (not included in repo)
-├── Requirements.txt            # Python dependencies
-└── README.md
+└── securai_store/           # Cœur du POC
+    ├── app.py               # Serveur backend (Flask, multithreading vidéo)
+    ├── rights_manager.py    # Gestionnaire des rôles (Admin, Employé, Inconnu)
+    ├── data/
+    │   └── enrolled/        # Photos des personnes autorisées (format: Role_Nom-X.jpg)
+    ├── modules/
+    │   ├── anomaly_detector.py # Détection des hautes fréquences (Spoofing)
+    │   ├── defender.py         # Filtres de défense (Gaussian Blur)
+    │   ├── face_detector.py    # Détection des visages (YOLOv8)
+    │   ├── face_recognizer.py  # Extraction d'embeddings (FaceNet InceptionResnetV1)
+    │   └── fgsm_attacker.py    # Moteur d'attaque adversariale (I-FGSM/PGD)
+    └── templates/
+        ├── EntranceControl.html # Dashboard vidéo en temps réel
+        └── StaticAnalysis.html  # Interface de test d'images fixes
 ```
 
-## Getting Started
+---
 
-### Prerequisites
+## 🛠️ Installation & Lancement
 
-- Python 3.10+ (tested on 3.10 and 3.12)
-- pip
-- Git
-- A webcam (for real-time attack simulation)
+1. **Environnement Virtuel**
+   Assurez-vous d'utiliser l'environnement virtuel inclus ou installez les dépendances via `requirements.txt` situé dans `securai_store/`.
+   ```bash
+   pip install -r securai_store/requirements.txt
+   ```
+   *(Note : Pour des performances fluides lors de l'attaque PGD, PyTorch avec support CUDA est fortement recommandé).*
 
-### Installation
+2. **Démarrage du Système**
+   ```bash
+   cd securai_store
+   python app.py
+   ```
 
-1. **Clone the repository**
+3. **Accès au Tableau de Bord**
+   Ouvrez un navigateur (Google Chrome recommandé) et rendez-vous sur : `http://localhost:5000`
 
-```bash
-git clone https://github.com/nadahemed/Face-Recognition-Adversarial-Attacks.git
-cd Face-Recognition-Adversarial-Attacks
-```
+---
 
-2. **Create and activate a virtual environment**
+## 👤 Gestion des Utilisateurs (Enrôlement)
 
-```bash
-# Windows
-python -m venv .venv
-.venv\Scripts\activate
+Pour ajouter une personne reconnue par le système :
+1. Prenez une photo claire de son visage.
+2. Renommez le fichier selon la convention : `[Role]_[Nom]-[Numero].jpg`.
+   * Exemple pour un Administrateur : `Manager_Elon-1.jpg`
+   * Exemple pour un Employé : `Employee_Bob-1.jpg`
+3. Placez l'image dans le dossier `securai_store/data/enrolled/`.
+4. Relancez l'application. Le système fusionnera automatiquement les embeddings s'il y a plusieurs photos pour la même personne.
 
-# macOS / Linux
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-3. **Install dependencies**
-
-```bash
-pip install -r Requirements.txt
-```
-
-### Training the Model
-
-```bash
-python -m Training.train --data_dir data/lfw-deepfunneled --epochs 30 --batch_size 32
-```
-
-Training progress is displayed with `tqdm` progress bars, and a loss/accuracy plot is saved as `training_history_cpu.png` at the end.
-
-### Evaluating the Model
-
-```bash
-python -m Training.evaluate_model --model_path backend/models/saved_model
-```
-
-### Running the Application
-
-1. **Start the Flask backend**
-
-```bash
-python -m backend.api.app
-```
-
-The API will be available at `http://localhost:5000`.
-
-2. **Open the frontend**
-
-Open `Frontend/index.html` in your browser, or serve it with any static file server:
-
-```bash
-# Quick serve with Python
-python -m http.server 8080 --directory Frontend
-```
-
-Then navigate to `http://localhost:8080`.
-
-3. **Run real-time attack simulation** (requires webcam)
-
-```bash
-python -m backend.simulate
-```
-
-This opens a webcam feed where:
-- YOLOv8 detects faces in real-time
-- The CNN model classifies detected faces
-- FGSM adversarial perturbations are applied with adjustable epsilon
-- Press `q` to quit
-
-## How It Works
-
-### CNN Architecture
-
-The `FaceCNN` model uses a series of convolutional layers followed by fully connected layers to classify face identities. The architecture is optimized for the LFW dataset resolution.
-
-### FGSM Attack
-
-The **Fast Gradient Sign Method** computes the gradient of the loss with respect to the input image, then adds a small perturbation in the direction that maximizes the loss:
-
-```
-adversarial_image = original_image + epsilon * sign(gradient)
-```
-
-A higher `epsilon` value produces stronger attacks but more visible distortions.
-
-### API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/predict` | Classify an uploaded face image |
-| POST | `/attack` | Apply adversarial attack and return results |
-| GET | `/health` | API health check |
-
-## Configuration
-
-Key parameters can be adjusted:
-
-- **Epsilon** (attack strength): `0.01` to `0.3` — higher values = stronger perturbation
-- **Epochs** (training): default `30`
-- **Batch size**: default `32`
-- **Image size**: `128x128` (resized during preprocessing)
-
-## License
-
-This project is developed for academic and research purposes.
+---
+*Ce projet est à but purement éducatif dans le cadre d'une démonstration des vulnérabilités de l'IA (Adversarial Machine Learning).*

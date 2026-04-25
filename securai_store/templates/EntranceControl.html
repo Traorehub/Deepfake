@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecurAI | Poste de Contrôle</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg-base: #050505;
+            --bg-panel: rgba(15, 15, 20, 0.85);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --text-main: #f0f0f0;
+            --text-muted: #888;
+            --color-ok: #00E676;
+            --color-warn: #FFD600;
+            --color-danger: #FF1744;
+            --color-info: #00E5FF;
+            --font-ui: 'Rajdhani', sans-serif;
+            --font-data: 'JetBrains Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 350px 1fr 350px;
+            grid-template-rows: 60px 1fr;
+            grid-template-areas: 
+                "header header header"
+                "sidebar-left main sidebar-right";
+            background-image: radial-gradient(circle at 50% 50%, #111 0%, #000 100%);
+        }
+
+        /* --- Header --- */
+        header {
+            grid-area: header;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+        .logo { font-size: 1.8rem; font-weight: 700; letter-spacing: 2px; }
+        .logo span { color: var(--color-info); }
+        .sys-status { font-family: var(--font-data); font-size: 0.9rem; color: var(--color-ok); display: flex; align-items: center; gap: 8px;}
+        .pulse { width: 8px; height: 8px; background: var(--color-ok); border-radius: 50%; box-shadow: 0 0 10px var(--color-ok); animation: blink 2s infinite; }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+        /* --- Panels --- */
+        .panel {
+            background: var(--bg-panel);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid var(--border-color);
+            border-left: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            overflow-y: auto;
+            z-index: 5;
+        }
+        .panel-left { grid-area: sidebar-left; border-left: none; }
+        .panel-right { grid-area: sidebar-right; border-right: none; }
+
+        .section-header {
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* --- Main Video Area --- */
+        .main-view {
+            grid-area: main;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .video-container {
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+        .video-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .hud-overlay {
+            position: absolute;
+            top: 20px; left: 20px; right: 20px; bottom: 20px;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .hud-top { display: flex; justify-content: space-between; }
+        .rec-badge { background: rgba(255, 23, 68, 0.2); color: var(--color-danger); border: 1px solid var(--color-danger); padding: 5px 15px; border-radius: 4px; font-family: var(--font-data); animation: blink 1s infinite; }
+        .fps-badge { font-family: var(--font-data); color: var(--color-info); text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+
+        /* --- Identity Card --- */
+        .identity-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+        .id-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #222;
+            margin-bottom: 15px;
+            border: 3px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            transition: all 0.3s;
+        }
+        .id-name { font-size: 1.8rem; font-weight: 600; margin-bottom: 5px; }
+        .id-role { font-family: var(--font-data); font-size: 0.9rem; padding: 4px 12px; border-radius: 20px; background: #333; }
+
+        /* Dynamic Status Colors */
+        .status-granted .identity-box { border-color: rgba(0, 230, 118, 0.3); background: rgba(0, 230, 118, 0.05); }
+        .status-granted .id-photo { border-color: var(--color-ok); box-shadow: 0 0 20px rgba(0, 230, 118, 0.4); color: var(--color-ok); }
+        .status-granted .id-role { background: rgba(0, 230, 118, 0.2); color: var(--color-ok); border: 1px solid var(--color-ok); }
+
+        .status-partial .identity-box { border-color: rgba(255, 214, 0, 0.3); background: rgba(255, 214, 0, 0.05); }
+        .status-partial .id-photo { border-color: var(--color-warn); box-shadow: 0 0 20px rgba(255, 214, 0, 0.4); color: var(--color-warn); }
+        .status-partial .id-role { background: rgba(255, 214, 0, 0.2); color: var(--color-warn); border: 1px solid var(--color-warn); }
+
+        .status-denied .identity-box { border-color: rgba(255, 23, 68, 0.3); background: rgba(255, 23, 68, 0.05); }
+        .status-denied .id-photo { border-color: var(--color-danger); box-shadow: 0 0 20px rgba(255, 23, 68, 0.4); color: var(--color-danger); }
+        .status-denied .id-role { background: rgba(255, 23, 68, 0.2); color: var(--color-danger); border: 1px solid var(--color-danger); }
+
+        /* --- Access Zones --- */
+        .zone-list { display: flex; flex-direction: column; gap: 10px; }
+        .zone-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-family: var(--font-data);
+            font-size: 0.9rem;
+        }
+        .zone-status { width: 12px; height: 12px; border-radius: 50%; background: #444; }
+        .zone-granted .zone-status { background: var(--color-ok); box-shadow: 0 0 8px var(--color-ok); }
+        .zone-denied .zone-status { background: var(--color-danger); box-shadow: 0 0 8px var(--color-danger); }
+
+        /* --- Controls --- */
+        .control-btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 6px;
+            font-family: var(--font-ui);
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn-attack { background: rgba(255, 23, 68, 0.1); color: var(--color-danger); border: 1px solid var(--color-danger); }
+        .btn-attack:hover { background: rgba(255, 23, 68, 0.2); box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); }
+        .btn-attack.active { background: var(--color-danger); color: #fff; box-shadow: 0 0 20px rgba(255, 23, 68, 0.5); }
+
+        .btn-defense { background: rgba(0, 229, 255, 0.1); color: var(--color-info); border: 1px solid var(--color-info); }
+        .btn-defense:hover { background: rgba(0, 229, 255, 0.2); box-shadow: 0 0 15px rgba(0, 229, 255, 0.3); }
+        .btn-defense.active { background: var(--color-info); color: #000; box-shadow: 0 0 20px rgba(0, 229, 255, 0.5); }
+
+        /* --- Metrics --- */
+        .metric-box { padding: 15px; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px solid var(--border-color); margin-bottom: 15px; }
+        .metric-value { font-family: var(--font-data); font-size: 1.5rem; margin-top: 5px; color: var(--text-main); }
+        
+        .alert-box {
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #444;
+            text-align: center;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        .alert-box.danger { background: rgba(255, 23, 68, 0.2); border-color: var(--color-danger); color: var(--color-danger); animation: shake 0.5s; }
+        
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .bar-bg { height: 6px; background: #333; border-radius: 3px; overflow: hidden; margin-top: 10px; }
+        .bar-fill { height: 100%; background: var(--color-info); width: 0%; transition: width 0.3s; }
+        .bar-fill.high { background: var(--color-danger); }
+
+        .log-container { flex: 1; overflow-y: auto; font-family: var(--font-data); font-size: 0.8rem; }
+        .log-item { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); display: flex; gap: 10px; }
+        .log-time { color: var(--color-info); }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">SECUR<span>AI</span></div>
+        <div style="display: flex; gap: 20px; align-items: center;">
+            <a href="/static_analysis" style="color: var(--text-main); text-decoration: none; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 4px; transition: all 0.3s; font-size: 0.9rem;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">🔍 Analyse Statique</a>
+            <div class="sys-status">
+                <div class="pulse"></div> SYSTEM ONLINE
+            </div>
+        </div>
+    </header>
+
+    <!-- LEFT PANEL -->
+    <div class="panel panel-left" id="panel-left">
+        <div>
+            <div class="section-header">Analyse Biométrique</div>
+            <div class="identity-box">
+                <div class="id-photo" id="id-photo">👤</div>
+                <div class="id-name" id="ui-name">SCANNING...</div>
+                <div class="id-role" id="ui-access-level">AWAITING FACE</div>
+                <div style="font-family: var(--font-data); font-size: 0.8rem; margin-top: 10px; color: var(--text-muted);">
+                    SIMILARITÉ: <span id="ui-conf" style="color: var(--text-main);">0%</span>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="section-header">Autorisations de Zones</div>
+            <div class="zone-list">
+                <div class="zone-item" id="zone-entrance"><span>Entrée Principale</span><div class="zone-status"></div></div>
+                <div class="zone-item" id="zone-stock"><span>Zone Logistique</span><div class="zone-status"></div></div>
+                <div class="zone-item" id="zone-cashier"><span>Caisse Centrale</span><div class="zone-status"></div></div>
+                <div class="zone-item" id="zone-server"><span>Salle Serveurs</span><div class="zone-status"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN VIEW -->
+    <div class="main-view">
+        <div class="video-container">
+            <img src="/video_feed" alt="Camera Feed">
+            <div class="hud-overlay">
+                <div class="hud-top">
+                    <div class="rec-badge">REC</div>
+                    <div class="fps-badge">FPS: <span id="fps-val">0</span></div>
+                </div>
+                <!-- You can add target crosshairs or scanning lines here via CSS if desired -->
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="panel panel-right">
+        <div>
+            <div class="section-header">Simulation d'Attaque (FGSM)</div>
+            <button id="btn-attack" class="control-btn btn-attack" onclick="toggleAttack()">
+                ⚠️ INJECTER BRUIT ADVERSE
+            </button>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">
+                Injecte une perturbation mathématique invisible à l'œil nu pour tromper l'extracteur d'empreinte faciale (FaceNet).
+            </div>
+            
+            <button id="btn-mode" class="control-btn btn-defense" onclick="toggleMode()">
+                🛡️ ACTIVER FILTRE DÉFENSE
+            </button>
+        </div>
+
+        <div>
+            <div class="section-header">Analyse d'Anomalie (FFT)</div>
+            <div class="alert-box" id="anomaly-alert">
+                FLUX VIDÉO INTÈGRE
+            </div>
+            <div class="metric-box">
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Énergie Haute Fréquence</div>
+                <div class="metric-value" id="anomaly-score-text">0.00</div>
+                <div class="bar-bg">
+                    <div class="bar-fill" id="anomaly-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; flex: 1;">
+            <div class="section-header">Journal d'Événements</div>
+            <div class="log-container" id="log-list">
+                <!-- Logs will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let lastIdentity = "";
+        const logList = document.getElementById('log-list');
+        const panelLeft = document.getElementById('panel-left');
+
+        function addLog(message) {
+            const div = document.createElement('div');
+            div.className = 'log-item';
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('fr-FR', {hour12: false});
+            div.innerHTML = `<span class="log-time">[${timeStr}]</span> <span>${message}</span>`;
+            logList.prepend(div);
+            if (logList.children.length > 20) {
+                logList.removeChild(logList.lastChild);
+            }
+        }
+
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                updateUI(data);
+            } catch (error) {
+                console.error("Erreur de connexion", error);
+            }
+        }
+
+        function updateUI(data) {
+            // Identity
+            const identityName = data.identity !== "Inconnu" && data.identity !== "Aucun" ? data.identity : "INCONNU";
+            document.getElementById('ui-name').innerText = identityName.toUpperCase();
+            document.getElementById('ui-conf').innerText = `${(data.confidence * 100).toFixed(1)}%`;
+            document.getElementById('ui-access-level').innerText = data.access_level;
+
+            // Identity Visual State
+            panelLeft.className = 'panel panel-left'; // Reset
+            if (identityName !== "INCONNU") {
+                if (data.access_level === 'ADMIN') {
+                    panelLeft.classList.add('status-granted');
+                    document.getElementById('id-photo').innerText = '✓';
+                } else if (data.access_level === 'EMPLOYEE') {
+                    panelLeft.classList.add('status-partial');
+                    document.getElementById('id-photo').innerText = '🔑';
+                } else {
+                    panelLeft.classList.add('status-denied');
+                    document.getElementById('id-photo').innerText = '✗';
+                }
+            } else {
+                document.getElementById('id-photo').innerText = '👤';
+            }
+
+            // Logs
+            if(identityName !== "INCONNU" && identityName !== lastIdentity) {
+                addLog(`Identification confirmée: ${identityName} [${data.access_level}]`);
+                lastIdentity = identityName;
+            } else if (identityName === "INCONNU" && lastIdentity !== "INCONNU" && lastIdentity !== "") {
+                lastIdentity = "INCONNU";
+            }
+
+            // Access Zones
+            const perms = data.permissions || {entrance: false, stock: false, cashier: false, server: false};
+            document.getElementById('zone-entrance').className = 'zone-item ' + (perms.entrance ? 'zone-granted' : 'zone-denied');
+            document.getElementById('zone-stock').className = 'zone-item ' + (perms.stock ? 'zone-granted' : 'zone-denied');
+            document.getElementById('zone-cashier').className = 'zone-item ' + (perms.cashier ? 'zone-granted' : 'zone-denied');
+            document.getElementById('zone-server').className = 'zone-item ' + (perms.server ? 'zone-granted' : 'zone-denied');
+
+            // FPS
+            document.getElementById('fps-val').innerText = data.fps;
+
+            // Anomaly
+            const anomAlert = document.getElementById('anomaly-alert');
+            const anomBar = document.getElementById('anomaly-bar');
+            if (data.anomaly_detected) {
+                anomAlert.className = 'alert-box danger';
+                anomAlert.innerText = '⚠️ SPOOFING DÉTECTÉ (FFT)';
+                anomBar.classList.add('high');
+            } else {
+                anomAlert.className = 'alert-box';
+                anomAlert.innerText = 'FLUX VIDÉO INTÈGRE';
+                anomBar.classList.remove('high');
+            }
+            const scoreVal = data.anomaly_score.toFixed(3);
+            document.getElementById('anomaly-score-text').innerText = scoreVal;
+            document.getElementById('anomaly-bar').style.width = `${Math.min(scoreVal * 100, 100)}%`;
+
+            // Buttons
+            const btnAttack = document.getElementById('btn-attack');
+            if (data.attack_active) {
+                btnAttack.className = 'control-btn btn-attack active';
+                btnAttack.innerHTML = '🛑 COUPER L\'INJECTION (FGSM)';
+            } else {
+                btnAttack.className = 'control-btn btn-attack';
+                btnAttack.innerHTML = '⚠️ INJECTER BRUIT ADVERSE';
+            }
+
+            const btnMode = document.getElementById('btn-mode');
+            if (data.model_mode === 'hardened') {
+                btnMode.className = 'control-btn btn-defense active';
+                btnMode.innerHTML = '🟢 FILTRE DÉFENSE ACTIF';
+            } else {
+                btnMode.className = 'control-btn btn-defense';
+                btnMode.innerHTML = '🛡️ ACTIVER FILTRE DÉFENSE';
+            }
+        }
+
+        let currentAttackState = false;
+        async function toggleAttack() {
+            currentAttackState = !currentAttackState;
+            await fetch('/api/toggle_attack', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({active: currentAttackState})
+            });
+            if(currentAttackState) addLog("⚠️ Début de l'injection adverse (FGSM)");
+            else addLog("Arrêt de l'injection adverse.");
+        }
+
+        let currentMode = 'standard';
+        async function toggleMode() {
+            currentMode = (currentMode === 'standard') ? 'hardened' : 'standard';
+            await fetch('/api/toggle_mode', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({mode: currentMode})
+            });
+            if(currentMode === 'hardened') addLog("🛡️ Filtre de défense activé (Hardened Mode)");
+            else addLog("Désactivation du filtre de défense.");
+        }
+
+        setInterval(fetchStatus, 300); // 300ms for smoother updates
+        addLog("Système initialisé. Connexion au flux vidéo...");
+    </script>
+</body>
+</html>

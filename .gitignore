@@ -1,1 +1,29 @@
-backend/models/saved_models/best_model.pth
+# Environments
+.venv_312/
+venv/
+env/
+ENV/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Project specific
+securai_store/models/*.pt
+securai_store/models/*.pth
+securai_store/models/*.h5
+yolov8n.pt
+
+# Ignore large datasets if accidentally placed
+data/
