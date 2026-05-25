@@ -1,8 +1,9 @@
---extra-index-url https://download.pytorch.org/whl/cpu
-torch
-torchvision
+# Core dependencies
+
+torch==2.3.0+cu121
+torchvision==0.18.0+cu121
 ultralytics>=8.0
-opencv-python>=4.9
+opencv-python-headless>=4.9
 flask>=3.0
 numpy>=1.26
 Pillow>=10.0

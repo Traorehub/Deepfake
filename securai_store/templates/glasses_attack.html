@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Glasses Attack Demo</title>
+    <style>
+        body {font-family: 'Inter', sans-serif; background: #111; color: #eee; text-align: center; padding: 2rem;}
+        .container {max-width: 600px; margin: auto;}
+        input[type=file] {margin: 1rem 0;}
+        button {background: #0066ff; border: none; color: #fff; padding: 0.6rem 1.2rem; cursor: pointer; border-radius: 4px;}
+        img {margin-top: 1rem; max-width: 100%; border: 2px solid #444;}
+        .msg {margin-top: 1rem; color: #0f0;}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Glasses Attack (Patch Attacker)</h1>
+    <form id="glassesForm" enctype="multipart/form-data">
+        <input type="file" name="image" accept="image/*" required />
+        <br/>
+        <label>Target (optional): </label>
+        <input type="text" name="target" placeholder="Manager_Demo" />
+        <br/>
+        <button type="submit">Apply Glasses Patch</button>
+    </form>
+    <div class="msg" id="msg"></div>
+    <img id="resultImg" src="" alt="Result" />
+</div>
+<script>
+    const form = document.getElementById('glassesForm');
+    const msg = document.getElementById('msg');
+    const resultImg = document.getElementById('resultImg');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        msg.textContent = 'Processing…';
+        const formData = new FormData(form);
+        try {
+            const resp = await fetch('/api/generate_glasses_attack', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.success) {
+                msg.textContent = `Before: ${data.before.identity} (${data.before.confidence}) → After: ${data.after.identity} (${data.after.confidence})`;
+                resultImg.src = data.after.image_base64;
+            } else {
+                msg.textContent = 'Error: ' + data.error;
+                resultImg.src = '';
+            }
+        } catch (err) {
+            msg.textContent = 'Request failed';
+            console.error(err);
+        }
+    });
+</script>
+</body>
+</html>

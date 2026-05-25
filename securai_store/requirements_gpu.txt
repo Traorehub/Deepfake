@@ -1,0 +1,30 @@
+# ══════════════════════════════════════════════
+#  SecurAI — Requirements PC avec GPU NVIDIA
+#  Installe avec : pip install -r requirements_gpu.txt
+# ══════════════════════════════════════════════
+
+# ── Deep Learning (GPU) ───────────────────────
+# torch avec CUDA 12.1 — si ton pote a une RTX 30xx/40xx
+# Si CUDA 11.8 : remplace cu121 par cu118
+torch==2.3.0+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+torchvision==0.18.0+cu121 --extra-index-url https://download.pytorch.org/whl/cu121
+
+# ── Reconnaissance faciale ────────────────────
+Pillow==10.2.0
+facenet-pytorch==2.5.3
+
+# ── Vision / Traitement image ─────────────────
+opencv-python==4.9.0.80
+numpy==1.26.4
+scikit-learn==1.4.2
+
+# ── Serveur web ───────────────────────────────
+flask==3.0.3
+werkzeug==3.0.3
+requests==2.32.3
+
+# ── Détection de visages (YOLOv8n local) ──────
+ultralytics==8.2.18
+
+# ── Divers ────────────────────────────────────
+tqdm==4.66.4
